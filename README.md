@@ -129,7 +129,12 @@ all.equal(
 
 ## Example 5: Computational Benchmark
 
-The `bench` package can be used to compare execution time and memory allocation.
+The `bench` package is used to compare execution time and memory allocation.
+
+The package vignette includes two performance comparisons:
+
+1. Model fitting using `linear_fit()` versus the built-in `lm()` function.
+2. Prediction using the R implementation versus the Rcpp implementation.
 
 ```r
 library(bench)
@@ -137,22 +142,22 @@ library(bench)
 set.seed(123)
 
 X_large <- matrix(rnorm(100000), ncol = 1)
-
 beta_large <- c(2, 3)
-
 model_large <- list(coefficients = beta_large)
 
 benchmark_results <- bench::mark(
   R = linear_predict(model_large, X_large),
   Rcpp = linear_predict_cpp(X_large, beta_large),
-  iterations = 100,
+  iterations = 20,
   check = FALSE
 )
 
 print(benchmark_results)
 ```
 
-Performance may vary depending on dataset size, implementation details, and computing environment. The Rcpp implementation is not guaranteed to outperform vectorized R operations.
+Performance depends on dataset size, implementation details, and the computing environment. The Rcpp implementation is not guaranteed to outperform vectorized R operations.
+
+For additional comparisons with `lm()` and examples using multiple predictors, see the package vignette.
 
 ## Unit Testing
 

@@ -1,4 +1,3 @@
-
 ---
 title: "Introduction to fastLinear"
 output: rmarkdown::html_vignette
@@ -46,7 +45,7 @@ The `linear_fit()` function estimates regression coefficients using QR decomposi
 
 # 2. Compare Results with lm()
 
-Compare the estimated regression coefficients with R's built-in `lm()` function.
+Compare the estimated regression coefficients and model statistics with R's built-in `lm()` function.
 
 ```{r}
 lm_model <- lm(bp ~ age)
@@ -80,8 +79,6 @@ predictions <- linear_predict(model, new_age)
 
 print(predictions)
 ```
-
-The expected predictions are 114, 124, and 134.
 
 Compare the predictions with `predict()`.
 
@@ -122,13 +119,112 @@ all.equal(
 
 Both implementations should produce equivalent numerical results.
 
-# 5. Computational Benchmark
+# 5. Simulated Data with Multiple Predictors
 
-The `bench` package can be used to compare execution time and memory allocation.
+The functions also support multiple predictors. This example uses simulated data with two independent predictors.
 
-```{r benchmark, eval=FALSE}
-library(bench)
+```{r}
+set.seed(123)
 
+n <- 200
+
+X_sim <- cbind(
+  x1 = rnorm(n),
+  x2 = rnorm(n)
+)
+
+y_sim <- 2 + 1.5 * X_sim[, 1] -
+  0.8 * X_sim[, 2] + rnorm(n, sd = 0.5)
+
+fit_sim <- linear_fit(X_sim, y_sim)
+
+sim_data <- data.frame(
+  y = y_sim,
+  x1 = X_sim[, 1],
+  x2 = X_sim[, 2]
+)
+
+lm_sim <- lm(y ~ x1 + x2, data = sim_data)
+
+all.equal(
+  as.numeric(fit_sim$coefficients),
+  as.numeric(coef(lm_sim)),
+  tolerance = 1e-8
+)
+
+all.equal(
+  fit_sim$r.squared,
+  unname(summary(lm_sim)$r.squared),
+  tolerance = 1e-8
+)
+```
+
+Compare predictions on new observations.
+
+```{r}
+new_sim <- matrix(
+  c(0.5, -0.2, 1.0, 0.3),
+  ncol = 2,
+  byrow = TRUE
+)
+
+colnames(new_sim) <- c("x1", "x2")
+
+pred_sim <- linear_predict(fit_sim, new_sim)
+
+pred_lm <- predict(
+  lm_sim,
+  newdata = as.data.frame(new_sim)
+)
+
+pred_cpp_sim <- linear_predict_cpp(
+  new_sim,
+  as.numeric(fit_sim$coefficients)
+)
+
+all.equal(
+  as.numeric(pred_sim),
+  as.numeric(pred_lm),
+  tolerance = 1e-8
+)
+
+all.equal(
+  as.numeric(pred_sim),
+  as.numeric(pred_cpp_sim),
+  tolerance = 1e-8
+)
+```
+
+These comparisons demonstrate that the package can handle both single-predictor and multiple-predictor regression models.
+
+# 6. Computational Benchmarks
+
+The `bench` package is used to compare execution time and memory allocation.
+
+## 6.1 Model Fitting: fastLinear vs. lm()
+
+Compare the fitting performance of `linear_fit()` with R's built-in `lm()` function using the same simulated dataset.
+
+```{r fitting-benchmark}
+fit_benchmark <- bench::mark(
+  fastLinear = linear_fit(X_sim, y_sim),
+  lm = lm(y ~ x1 + x2, data = sim_data),
+  iterations = 20,
+  check = FALSE
+)
+
+print(fit_benchmark)
+```
+
+Both functions estimate ordinary least squares coefficients, although they return different model objects and may perform different amounts of additional computation.
+
+The benchmark compares execution time and memory allocation rather than assuming that either implementation is faster.
+
+## 6.2 Prediction: R vs. Rcpp
+
+Compare the R and Rcpp prediction implementations using a larger simulated dataset.
+
+```{r prediction-benchmark}
 set.seed(123)
 
 X_large <- matrix(rnorm(100000), ncol = 1)
@@ -137,21 +233,27 @@ beta_large <- c(2, 3)
 
 model_large <- list(coefficients = beta_large)
 
-benchmark_results <- bench::mark(
+all.equal(
+  as.numeric(linear_predict(model_large, X_large)),
+  as.numeric(linear_predict_cpp(X_large, beta_large)),
+  tolerance = 1e-8
+)
+
+prediction_benchmark <- bench::mark(
   R = linear_predict(model_large, X_large),
   Rcpp = linear_predict_cpp(X_large, beta_large),
-  iterations = 100,
+  iterations = 20,
   check = FALSE
 )
 
-print(benchmark_results)
+print(prediction_benchmark)
 ```
 
-The benchmark can be executed separately in RStudio.
+The benchmark results show the execution time and memory allocation of each implementation.
 
 Performance depends on dataset size, implementation details, and the computing environment. The Rcpp implementation is not guaranteed to outperform vectorized R operations.
 
-# 6. Unit Testing
+# 7. Unit Testing
 
 The package uses `testthat` for automated unit testing.
 
@@ -163,7 +265,7 @@ devtools::test()
 
 The tests evaluate model fitting, prediction accuracy, input validation, and error handling.
 
-# 7. Code Coverage
+# 8. Code Coverage
 
 Code coverage is evaluated using the `covr` package.
 
@@ -181,4 +283,4 @@ During local testing, the package achieved 91.89% code coverage.
 
 The `fastLinear` package demonstrates the implementation of linear regression and prediction using R and Rcpp.
 
-The package includes numerical validation against built-in R functions, computational benchmarking, automated unit testing, and code coverage analysis.
+The package includes numerical validation against built-in R functions, applications using simulated datasets, computational benchmarking, automated unit testing, and code coverage analysis.
