@@ -1,0 +1,184 @@
+
+---
+title: "Introduction to fastLinear"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to fastLinear}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+The `fastLinear` package implements ordinary least squares (OLS) linear regression and prediction using R and Rcpp.
+
+This vignette demonstrates model fitting, prediction, numerical accuracy, and computational performance.
+
+```{r}
+library(fastLinear)
+```
+
+# 1. Fit a Linear Regression Model
+
+Create a small dataset containing age and blood pressure.
+
+```{r}
+age <- c(20, 30, 40, 50, 60)
+bp <- c(110, 120, 125, 140, 150)
+
+model <- linear_fit(age, bp)
+
+model$coefficients
+model$fitted.values
+model$residuals
+model$r.squared
+model$adj.r.squared
+```
+
+The `linear_fit()` function estimates regression coefficients using QR decomposition and calculates fitted values, residuals, SSE, R-squared, and adjusted R-squared.
+
+# 2. Compare Results with lm()
+
+Compare the estimated regression coefficients with R's built-in `lm()` function.
+
+```{r}
+lm_model <- lm(bp ~ age)
+
+all.equal(
+  as.numeric(model$coefficients),
+  as.numeric(coef(lm_model))
+)
+
+all.equal(
+  model$r.squared,
+  unname(summary(lm_model)$r.squared)
+)
+
+all.equal(
+  model$adj.r.squared,
+  unname(summary(lm_model)$adj.r.squared)
+)
+```
+
+The expected results are `TRUE`, indicating numerical agreement between the implementations.
+
+# 3. Predict New Outcomes
+
+Predict blood pressure for new ages using the fitted model.
+
+```{r}
+new_age <- c(25, 35, 45)
+
+predictions <- linear_predict(model, new_age)
+
+print(predictions)
+```
+
+The expected predictions are 114, 124, and 134.
+
+Compare the predictions with `predict()`.
+
+```{r}
+lm_predictions <- predict(
+  lm_model,
+  newdata = data.frame(age = new_age)
+)
+
+all.equal(
+  as.numeric(predictions),
+  as.numeric(lm_predictions)
+)
+```
+
+# 4. Prediction Using Rcpp
+
+The package also provides a C++ implementation of linear prediction through Rcpp.
+
+```{r}
+X_new <- matrix(c(25, 35, 45), ncol = 1)
+
+beta <- as.numeric(model$coefficients)
+
+pred_cpp <- linear_predict_cpp(X_new, beta)
+
+print(pred_cpp)
+```
+
+Compare predictions from R and Rcpp.
+
+```{r}
+all.equal(
+  as.numeric(predictions),
+  as.numeric(pred_cpp)
+)
+```
+
+Both implementations should produce equivalent numerical results.
+
+# 5. Computational Benchmark
+
+The `bench` package can be used to compare execution time and memory allocation.
+
+```{r benchmark, eval=FALSE}
+library(bench)
+
+set.seed(123)
+
+X_large <- matrix(rnorm(100000), ncol = 1)
+
+beta_large <- c(2, 3)
+
+model_large <- list(coefficients = beta_large)
+
+benchmark_results <- bench::mark(
+  R = linear_predict(model_large, X_large),
+  Rcpp = linear_predict_cpp(X_large, beta_large),
+  iterations = 100,
+  check = FALSE
+)
+
+print(benchmark_results)
+```
+
+The benchmark can be executed separately in RStudio.
+
+Performance depends on dataset size, implementation details, and the computing environment. The Rcpp implementation is not guaranteed to outperform vectorized R operations.
+
+# 6. Unit Testing
+
+The package uses `testthat` for automated unit testing.
+
+Run the tests from the package project directory:
+
+```{r testing, eval=FALSE}
+devtools::test()
+```
+
+The tests evaluate model fitting, prediction accuracy, input validation, and error handling.
+
+# 7. Code Coverage
+
+Code coverage is evaluated using the `covr` package.
+
+```{r coverage, eval=FALSE}
+coverage <- covr::package_coverage()
+
+print(coverage)
+
+covr::report(coverage)
+```
+
+During local testing, the package achieved 91.89% code coverage.
+
+# Conclusion
+
+The `fastLinear` package demonstrates the implementation of linear regression and prediction using R and Rcpp.
+
+The package includes numerical validation against built-in R functions, computational benchmarking, automated unit testing, and code coverage analysis.

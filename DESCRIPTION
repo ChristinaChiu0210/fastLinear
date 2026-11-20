@@ -1,0 +1,26 @@
+Package: fastLinear
+Type: Package
+Title: Linear Regression Implementation Using R and Rcpp
+Version: 0.1.0
+Authors@R:
+    person("Yueh-Ling", "Chiu",
+           email = "yuehlinc@umich.edu",
+           role = c("aut", "cre"))
+Description: Provides implementations of ordinary least squares
+    linear regression using R and Rcpp. Includes functions for
+    model fitting, prediction, and statistical summaries, along
+    with tools for evaluating computational accuracy and efficiency.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1
+LinkingTo: 
+    Rcpp
+Imports: 
+    Rcpp
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
