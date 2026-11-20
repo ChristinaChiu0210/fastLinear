@@ -1,5 +1,9 @@
 # fastLinear
 
+<!-- badges: start -->
+[![Codecov test coverage](https://codecov.io/gh/ChristinaChiu0210/fastLinear/graph/badge.svg)](https://app.codecov.io/gh/ChristinaChiu0210/fastLinear)
+<!-- badges: end -->
+
 `fastLinear` is an R package that implements ordinary least squares (OLS) linear regression and prediction using R and Rcpp. The package demonstrates the implementation of statistical algorithms, numerical accuracy, computational efficiency, and software testing.
 
 ## Features
@@ -162,9 +166,17 @@ devtools::test()
 
 Tests include model fitting, prediction accuracy, input validation, and error handling.
 
+## Continuous Integration
+
+The package uses GitHub Actions to automatically run R CMD check across multiple operating systems, including Windows, macOS, and Ubuntu.
+
+An additional GitHub Actions workflow is configured to run automated code coverage testing.
+
 ## Code Coverage
 
 Code coverage is evaluated using the `covr` package.
+
+To calculate code coverage locally:
 
 ```r
 coverage <- covr::package_coverage()
@@ -176,6 +188,18 @@ covr::report(coverage)
 
 The package achieved 91.89% code coverage during local testing.
 
+Automated code coverage testing is configured through GitHub Actions, with results intended to be reported through Codecov. The coverage badge at the top of this README will display the reported coverage once the integration is successfully completed.
+
+## Vignette
+
+The package includes an introductory vignette demonstrating model fitting, prediction, numerical accuracy, and computational benchmarking.
+
+To browse the vignette after installation:
+
+```r
+browseVignettes("fastLinear")
+```
+
 ## Documentation
 
 Function documentation is generated using `roxygen2`.
@@ -185,6 +209,7 @@ To view the documentation after installation:
 ```r
 ?linear_fit
 ?linear_predict
+?linear_predict_cpp
 ```
 
 ## Author
